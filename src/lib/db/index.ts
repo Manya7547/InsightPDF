@@ -10,5 +10,6 @@ if(!process.env.DATABASE_URL) {
 const sql = neon(process.env.DATABASE_env)
 
 // performing sql queries 
-export const db = drizzle(sql)
+const db = drizzle({ client: sql });
+
 
