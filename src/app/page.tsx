@@ -1,10 +1,9 @@
-// app/page.tsx
 import { Button } from "@/components/ui/button";
-// import CustomSignOutButton from "@/components/ui/customSignOutButton";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import FileUpload from "@/components/FileUpload";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -31,7 +30,7 @@ export default async function Home() {
           </p>
           <div className="w-full mt-4">
             {isAuth ? (
-              <h1>Upload file</h1>
+              <FileUpload />
             ) : (
               <Link href="/sign-in">
                 <Button>
