@@ -13,6 +13,8 @@ export const chats = pgTable('chats',{
     fileKey: text('file_key').notNull(), //maps resource to s3 bucket 
 })
 
+export type DrizzleChat = typeof chats.$inferSelect;
+
 //storing messages
 export const messages = pgTable('messages',{
     id: serial('id').primaryKey(),

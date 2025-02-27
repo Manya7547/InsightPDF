@@ -1,73 +1,55 @@
-import { Configuration, OpenAIApi } from "openai-edge";
-import { Message, OpenAIStream, StreamingTextResponse } from "ai";
-import { getContext } from "@/lib/context";
+import ChatComponent from "@/components/ChatComponent";
+import ChatSideBar from "@/components/ChatSideBar";
+import PDFViewer from "@/components/PDFViewer";
 import { db } from "@/lib/db";
-import { chats, messages as _messages } from "@/lib/db/schema";
+import { chats } from "@/lib/db/schema";
+import { checkSubscription } from "@/lib/subscription";
+import { currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
+import React from "react";
 
-export const runtime = "edge";
+type Props = {
+  params: {
+    chatId: string;
+  };
+};
 
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(config);
+const ChatPage = async ({ params: { chatId } }: Props) => {
+  const user = await currentUser(); // New Clerk authentication method
+  const userId = user?.id;
+  if (!userId) {
+    return redirect("/sign-in");
+  }
+  const _chats = await db.select().from(chats).where(eq(chats.userId, userId));
+  if (!_chats) {
+    return redirect("/");
+  }
+  if (!_chats.find((chat) => chat.id === parseInt(chatId))) {
+    return redirect("/");
+  }
 
-export async function POST(req: Request) {
-  try {
-    const { messages, chatId } = await req.json();
-    const _chats = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (_chats.length != 1) {
-      return NextResponse.json({ error: "chat not found" }, { status: 404 });
-    }
-    const fileKey = _chats[0].fileKey;
-    const lastMessage = messages[messages.length - 1];
-    const context = await getContext(lastMessage.content, fileKey);
+  const currentChat = _chats.find((chat) => chat.id === parseInt(chatId));
+  const isPro = await checkSubscription();
 
-    const prompt = {
-      role: "system",
-      content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
-      The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
-      AI is a well-behaved and well-mannered individual.
-      AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
-      AI has the sum of all knowledge in their brain, and is able to accurately answer nearly any question about any topic in conversation.
-      AI assistant is a big fan of Pinecone and Vercel.
-      START CONTEXT BLOCK
-      ${context}
-      END OF CONTEXT BLOCK
-      AI assistant will take into account any CONTEXT BLOCK that is provided in a conversation.
-      If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
-      AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
-      AI assistant will not invent anything that is not drawn directly from the context.
-      `,
-    };
+  return (
+    <div className="flex max-h-screen overflow-scroll">
+      <div className="flex w-full max-h-screen overflow-scroll">
+        {/* chat sidebar */}
+        <div className="flex-[1] max-w-xs">
+          <ChatSideBar chats={_chats} chatId={parseInt(chatId)} isPro={isPro} />
+        </div>
+        {/* pdf viewer */}
+        <div className="max-h-screen p-4 oveflow-scroll flex-[5]">
+          <PDFViewer pdf_url={currentChat?.pdfUrl || ""} />
+        </div>
+        {/* chat component */}
+        <div className="flex-[3] border-l-4 border-l-slate-200">
+          <ChatComponent chatId={parseInt(chatId)} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
-    const response = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [
-        prompt,
-        ...messages.filter((message: Message) => message.role === "user"),
-      ],
-      stream: true,
-    });
-    const stream = OpenAIStream(response, {
-      onStart: async () => {
-        // save user message into db
-        await db.insert(_messages).values({
-          chatId,
-          content: lastMessage.content,
-          role: "user",
-        });
-      },
-      onCompletion: async (completion) => {
-        // save ai message into db
-        await db.insert(_messages).values({
-          chatId,
-          content: completion,
-          role: "system",
-        });
-      },
-    });
-    return new StreamingTextResponse(stream);
-  } catch (error) {}
-}
+export default ChatPage;
