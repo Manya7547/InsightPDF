@@ -1,4 +1,4 @@
-//import { db } from "@/lib/db";
+import { db } from "@/lib/db";
 import { chats } from "@/lib/db/schema";
 import { loadS3IntoPinecone } from "@/lib/pinecone";
 import { getS3Url } from "@/lib/s3";
@@ -18,25 +18,21 @@ export async function POST(req: Request, res: Response) {
     console.log(file_key, file_name);
     await loadS3IntoPinecone(file_key);
     // creating a chat 
-    const chat_id = await db
-      .insert(chats)
-      .values({
-        fileKey: file_key,
-        pdfName: file_name,
-        pdfUrl: getS3Url(file_key),
-        userId,
-      })
-      .returning({
-        insertedId: chats.id,
-      });
+    const insertedChat = await db.insert(chats).values({
+    fileKey: file_key,
+    pdfName: file_name,
+    pdfUrl: getS3Url(file_key),
+    userID: userId,
+  })
+  .returning({ 
+    id: chats.id // Correct syntax for Drizzle
+  }); 
 
       // returning chat id 
-    return NextResponse.json(
-      {
-        chat_id: chat_id[0].insertedId,
-      },
-      { status: 200 }
-    );
+      return NextResponse.json({
+        chat_id: insertedChat[0].id 
+      });
+      
   } catch (error) {
     console.error(error);
     return NextResponse.json(

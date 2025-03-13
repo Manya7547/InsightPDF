@@ -1,15 +1,12 @@
-import {neon, neonConfig} from '@neondatabase/serverless'
+import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-neonConfig.fetchConnectionCache = true;
 
-if(!process.env.DATABASE_URL) {
-    throw new Error('database not found');
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL not set');
 }
 
-// connect sql server using neon connection
-const sql = neon(process.env.DATABASE_env)
+// Use DATABASE_URL for the connection string
+const sql = neon(process.env.DATABASE_URL);
 
-// performing sql queries 
-const db = drizzle({ client: sql });
-
-
+// Drizzle initialization
+export const db = drizzle(sql);  

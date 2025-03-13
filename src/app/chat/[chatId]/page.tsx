@@ -15,16 +15,21 @@ type Props = {
   };
 };
 
-const ChatPage = async ({ params: { chatId } }: Props) => {
+const ChatPage = async ({ params }: Props) => {
+  const { chatId } = await params; // ✅ Await params before accessing chatId
+
   const user = await currentUser(); // New Clerk authentication method
   const userId = user?.id;
+
   if (!userId) {
     return redirect("/sign-in");
   }
-  const _chats = await db.select().from(chats).where(eq(chats.userId, userId));
+
+  const _chats = await db.select().from(chats).where(eq(chats.userID, userId));
   if (!_chats) {
     return redirect("/");
   }
+
   if (!_chats.find((chat) => chat.id === parseInt(chatId))) {
     return redirect("/");
   }

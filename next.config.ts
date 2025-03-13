@@ -28,9 +28,22 @@ const cspHeader = `
   form-action 'self'
     https://fleet-moose-76.clerk.accounts.dev;
   worker-src 'self' blob:;
-`.replace(/\n/g, ' ').replace(/\s+/g, ' '); // Remove extra spaces
+`.replace(/\n/g, ' ').replace(/\s+/g, ' ');
 
-module.exports = {
+const nextConfig = {
+  webpack: (/** @type {import('webpack').Configuration} */ config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      stream: require.resolve("stream-browserify"),
+      http: require.resolve("stream-http"),
+      crypto: require.resolve("crypto-browserify")
+    };
+    return config;
+  },
   async headers() {
     return [
       {
@@ -45,3 +58,5 @@ module.exports = {
     ];
   }
 };
+
+module.exports = nextConfig;

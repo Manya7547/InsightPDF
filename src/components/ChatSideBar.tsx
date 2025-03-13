@@ -43,6 +43,8 @@ const ChatSideBar = ({ chats, chatId, isPro }: Props) => {
           </Link>
         ))}
       </div>
+
+   
     </div>
   );
 };
