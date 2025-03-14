@@ -8,6 +8,7 @@ import MessageList from "./MessageList";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { Message } from "ai";
+import { toast } from "react-hot-toast";
 
 type Props = { chatId: number };
 
@@ -62,46 +63,51 @@ const ChatComponent = ({ chatId }: Props) => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput || isLoading) return;
 
-    // Save user message
     const userMessage = {
-      content: input.trim(),
-      role: "user",
+      content: trimmedInput,
+      role: "user" as const,
     };
 
-    // Optimistically update UI
-    setMessages((current) => [...current, userMessage as Message]);
-
     try {
-      // Save to database
+      // Save message to database first
       await axios.post("/api/add-message", {
         chatId,
-        content: input.trim(),
+        content: trimmedInput,
         role: "user",
       });
 
+      // Update UI optimistically
+      setMessages((current) => [...current, userMessage as Message]);
+
       // Submit to AI
       await handleSubmit(e);
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      toast.error(error.response?.data?.error || "Failed to send message");
 
-      // Refetch messages
-      await refetch();
-    } catch (error) {
-      console.error("Error sending message:", error);
+      // Revert optimistic update
+      setMessages((current) =>
+        current.filter((msg) => msg.content !== userMessage.content)
+      );
     }
   };
 
   return (
-    <div className="relative max-h-screen overflow-scroll">
-      <div className="sticky top-0 inset-x-0 p-2 bg-white h-fit">
+    <div className="flex flex-col h-screen">
+      <div className="sticky top-0 inset-x-0 p-2 bg-white h-fit border-b border-slate-200">
         <h3 className="text-xl font-bold">Chat</h3>
       </div>
 
-      <MessageList messages={messages} isLoading={isLoading} />
+      <div className="flex-1 overflow-y-auto px-4">
+        <MessageList messages={messages} isLoading={isLoading} />
+      </div>
 
       <form
         onSubmit={handleFormSubmit}
-        className="sticky bottom-0 inset-x-0 px-2 py-4 bg-white"
+        className="sticky bottom-0 inset-x-0 px-4 py-3 bg-white border-t border-slate-200"
       >
         <div className="flex">
           <Input
@@ -109,8 +115,13 @@ const ChatComponent = ({ chatId }: Props) => {
             onChange={handleInputChange}
             placeholder="Ask any question..."
             className="w-full"
+            disabled={isLoading}
           />
-          <Button className="ml-2" disabled={isLoading} type="submit">
+          <Button
+            className="ml-2"
+            disabled={isLoading || !input.trim()}
+            type="submit"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>

@@ -1,7 +1,7 @@
 import {integer, pgEnum, pgTable, serial, text, timestamp, varchar} from 'drizzle-orm/pg-core'
 
 // role - either system (chat GPT) or user
-export const userSystemEnum = pgEnum('user_system_enum',['system','user'])
+export const userSystemEnum = pgEnum('user_system_enum', ['system', 'user', 'assistant'])
 
 // storing chats 
 export const chats = pgTable('chats',{

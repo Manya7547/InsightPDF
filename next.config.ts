@@ -1,4 +1,4 @@
-// next.config.js
+/** @type {import('next').NextConfig} */
 const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval'
@@ -24,24 +24,31 @@ const cspHeader = `
   frame-src 'self'
     https://clerk.com
     https://challenges.cloudflare.com
-    https://fleet-moose-76.clerk.accounts.dev;
+    https://fleet-moose-76.clerk.accounts.dev
+    https://docs.google.com
+    https://*.google.com;
   form-action 'self'
     https://fleet-moose-76.clerk.accounts.dev;
   worker-src 'self' blob:;
 `.replace(/\n/g, ' ').replace(/\s+/g, ' ');
 
 const nextConfig = {
-  webpack: (/** @type {import('webpack').Configuration} */ config) => {
-    config.resolve = config.resolve || {};
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-      stream: require.resolve("stream-browserify"),
-      http: require.resolve("stream-http"),
-      crypto: require.resolve("crypto-browserify")
-    };
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        path: false,
+        stream: require.resolve('stream-browserify'),
+        crypto: require.resolve('crypto-browserify'),
+        http: require.resolve('stream-http'),
+        https: require.resolve('https-browserify'),
+        os: require.resolve('os-browserify/browser'),
+        zlib: require.resolve('browserify-zlib'),
+      };
+    }
     return config;
   },
   async headers() {
@@ -59,4 +66,4 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
+export default nextConfig;

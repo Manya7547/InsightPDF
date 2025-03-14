@@ -10,9 +10,9 @@ type Props = {
 const MessageList = ({ messages, isLoading }: Props) => {
   return (
     <div className="flex flex-col gap-2 px-4">
-      {messages.map((message) => (
+      {messages.map((message, index) => (
         <div
-          key={message.id}
+          key={message.id || `${message.role}-${index}`}
           className={cn(
             "flex w-full",
             message.role === "user" ? "justify-end" : "justify-start"

@@ -16,9 +16,8 @@ type Props = {
 };
 
 const ChatPage = async ({ params }: Props) => {
-  const { chatId } = await params; // ✅ Await params before accessing chatId
-
-  const user = await currentUser(); // New Clerk authentication method
+  const { chatId } = await params;
+  const user = await currentUser();
   const userId = user?.id;
 
   if (!userId) {
@@ -38,20 +37,20 @@ const ChatPage = async ({ params }: Props) => {
   const isPro = await checkSubscription();
 
   return (
-    <div className="flex max-h-screen overflow-scroll">
-      <div className="flex w-full max-h-screen overflow-scroll">
-        {/* chat sidebar */}
-        <div className="flex-[1] max-w-xs">
-          <ChatSideBar chats={_chats} chatId={parseInt(chatId)} isPro={isPro} />
-        </div>
-        {/* pdf viewer */}
-        <div className="max-h-screen p-4 oveflow-scroll flex-[5]">
-          <PDFViewer pdf_url={currentChat?.pdfUrl || ""} />
-        </div>
-        {/* chat component */}
-        <div className="flex-[3] border-l-4 border-l-slate-200">
-          <ChatComponent chatId={parseInt(chatId)} />
-        </div>
+    <div className="flex h-screen">
+      {/* chat sidebar */}
+      <div className="flex-[1] max-w-xs border-r border-slate-200">
+        <ChatSideBar chats={_chats} chatId={parseInt(chatId)} isPro={isPro} />
+      </div>
+
+      {/* pdf viewer */}
+      <div className="flex-[3] border-r border-slate-200">
+        <PDFViewer pdf_url={currentChat?.pdfUrl || ""} />
+      </div>
+
+      {/* chat component */}
+      <div className="flex-[2]">
+        <ChatComponent chatId={parseInt(chatId)} />
       </div>
     </div>
   );

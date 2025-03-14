@@ -12,6 +12,7 @@ import React from "react";
 const FileUpload = () => {
   const router = useRouter();
   const [uploading, setUploading] = React.useState(false);
+
   const { mutate, isLoading } = useMutation({
     mutationFn: async ({
       file_key,
@@ -26,6 +27,15 @@ const FileUpload = () => {
       });
       return response.data;
     },
+    onSuccess: ({ chat_id }) => {
+      toast.success("Chat created!");
+      router.push(`/chat/${chat_id}`);
+    },
+    onError: (error: any) => {
+      setUploading(false);
+      toast.error(error.response?.data?.error || "Error creating chat");
+      console.error("Error:", error);
+    },
   });
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -34,32 +44,22 @@ const FileUpload = () => {
     onDrop: async (acceptedFiles) => {
       const file = acceptedFiles[0];
       if (file.size > 10 * 1024 * 1024) {
-        // bigger than 10mb!
-        toast.error("File too large");
+        toast.error("File too large (max 10MB)");
         return;
       }
 
       try {
         setUploading(true);
         const data = await uploadToS3(file);
-        console.log("meow", data);
+
         if (!data?.file_key || !data.file_name) {
-          toast.error("Something went wrong");
-          return;
+          throw new Error("Failed to upload file");
         }
-        mutate(data, {
-          // redirect to the chat page
-          onSuccess: ({ chat_id }) => {
-            toast.success("Chat created!");
-            router.push(`/chat/${chat_id}`);
-          },
-          onError: (err) => {
-            toast.error("Error creating chat");
-            console.error(err);
-          },
-        });
+
+        mutate(data);
       } catch (error) {
-        console.log(error);
+        console.error("Upload error:", error);
+        toast.error("Error uploading file");
       } finally {
         setUploading(false);
       }
