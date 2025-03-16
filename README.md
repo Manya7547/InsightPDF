@@ -5,10 +5,16 @@ InsightPDF is a Next.js application that allows users to chat with their PDF doc
 ## Features
 
 - 📄 PDF file upload and processing
+  ![PDF Upload Interface](/public/screenshots/authenticated-page.png)
 - 💬 Real-time chat interface
+  ![Chat Interface](/public/screenshots/real-time-chat.png)
 - 🔍 Semantic search within PDFs
+  ![PDF Chat](/public/screenshots/add-new-pdf.png)
 - 👤 User authentication
+  ![Authentication](/public/screenshots/clerk-auth.png)
+  ![Unauthenticated](/public/screenshots/main-page-unauth.png)
 - 📱 Responsive design
+  ![Chats Page](/public/screenshots/go-to-chats.png)
 - 💾 Persistent chat history
 
 ## Prerequisites
